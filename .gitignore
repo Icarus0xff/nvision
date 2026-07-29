@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+
+# Model weights
+*.pt
+
+# Data & database
+*.duckdb
+nvision_data.duckdb
+
+# Screenshots & outputs
+wechat/
+runs/
+annotated.png
+bus.jpg
+
+# Training dataset
+dataset/
+
+# Temp / generated
+coords.json
+ocr_result_example.json
+captureloop.sh
+*.png
+*.jpg
