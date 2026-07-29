@@ -67,7 +67,15 @@ python capture_and_detect.py \
     --return-desktop 3
 ```
 
-截取指定桌面的微信窗口，检测消息卡片并提取文字。
+仓库自带训练好的 `best.pt` 模型，可自动识别微信聊天中的消息卡片，将卡片区域裁剪为独立图片，再用 RapidOCR 提取卡片中的文字内容。全链路效果：
+
+```
+微信窗口截图 → YOLO 检测消息卡片 → 裁剪出每张卡片 → OCR 提取文字
+```
+
+无需自行训练即可使用。
+
+![YOLO 检测效果](val_batch0_pred_small.jpg)
 
 参数说明：
 
