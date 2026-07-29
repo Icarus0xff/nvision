@@ -46,14 +46,15 @@ def train(model_cfg: str, data: str, epochs: int, imgsz: int, project: str, name
         name=name,
         device=device,
         # --- 针对 UI 自动化的关键参数优化 ---
-        erasing=0.0,  # 关闭随机遮挡
-        hsv_h=0.0,  # 关闭色相抖动（UI 颜色是极强的主征）
-        hsv_s=0.1,  # 降低饱和度抖动
-        hsv_v=0.1,  # 降低亮度抖动
-        degrees=0.0,  # 禁用旋转
-        shear=0.0,  # 禁用剪切
-        fliplr=0.0,  # 禁用左右翻转（文字和图标不能镜像）
-        scale=0.2,  # 减小缩放抖动
+        # mosaic=0.0,  # 关闭马赛克增强（破坏 UI 版面结构）
+        # erasing=0.0,  # 关闭随机遮挡
+        # hsv_h=0.0,  # 关闭色相抖动（UI 颜色是极强的主征）
+        # hsv_s=0.1,  # 降低饱和度抖动
+        # hsv_v=0.1,  # 降低亮度抖动
+        # degrees=0.0,  # 禁用旋转
+        # shear=0.0,  # 禁用剪切
+        # fliplr=0.0,  # 禁用左右翻转（文字和图标不能镜像）
+        # scale=0.2,  # 减小缩放抖动
     )
     return model
 
