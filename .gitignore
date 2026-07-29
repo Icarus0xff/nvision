@@ -9,8 +9,11 @@ __pycache__/
 # IDE
 .idea/
 
-# Model weights
-*.pt
+# Model weights (large ones ignored)
+yolo26l.pt
+yolo26m.pt
+yolo26n.pt
+yolo26s.pt
 
 # Data & database
 *.duckdb
