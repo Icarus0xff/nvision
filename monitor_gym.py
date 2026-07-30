@@ -6,10 +6,14 @@
 
 import time
 import re
+import json
 from pathlib import Path
 from datetime import datetime
 
 import db
+
+# 已处理的 detection_id 记录文件
+_PROCESSED_FILE = Path(__file__).parent / '.gym_processed.json'
 
 
 # 健身房排期文本的关键特征（简化版）
@@ -135,44 +139,87 @@ def monitor(db_path: str = None, interval: int = 1, show_all: bool = False):
         print("\n\n⏹️  监控已停止")
 
 
+def _load_processed_ids() -> set:
+    """加载已处理的 detection_id 集合"""
+    if _PROCESSED_FILE.exists():
+        try:
+            data = json.loads(_PROCESSED_FILE.read_text())
+            return set(data.get('processed_detection_ids', []))
+        except (json.JSONDecodeError, KeyError):
+            return set()
+    return set()
+
+
+def _save_processed_ids(ids: set):
+    """保存已处理的 detection_id 集合"""
+    # 只保留最近 200 条，避免文件无限增长
+    ids_list = sorted(ids)[-200:]
+    _PROCESSED_FILE.write_text(json.dumps({'processed_detection_ids': ids_list}, indent=2))
+
+
 def check_once(db_path: str = None) -> bool:
     """
-    只检查一次最新的 OCR 结果
+    只检查一次最新的 OCR 结果，已处理过的不会重复触发
     :param db_path: 数据库路径
-    :return: True 如果检测到健身房通知，否则 False
+    :return: True 如果检测到**新的**健身房通知，否则 False
     """
     if db_path is None:
         db_path = db.get_db_path()
     
-    results = db.query_recent_data(db_path, limit=1)
+    # 加载已处理记录
+    processed_ids = _load_processed_ids()
+    
+    # 查询最近的 OCR 结果（多查几条以覆盖多个 detection）
+    results = db.query_recent_data(db_path, limit=30)
     
     if not results:
         print("暂无 OCR 数据")
         return False
     
-    latest = results[0]
-    full_text = latest.get('full_text', '')
-    
-    print(f"最新 OCR 文本：\n{full_text}\n")
-    
-    match_result = check_gym_notification(full_text)
-    
-    if match_result['is_gym_notice']:
-        print("✅ 匹配到健身房排期通知！")
-        print(f"匹配特征：{', '.join(match_result['matched_patterns'])}")
+    # 遍历结果，找到未处理的健身房通知
+    skipped_keys = set()
+    for r in results:
+        full_text = r.get('full_text', '') or ''
+        match_result = check_gym_notification(full_text)
         
-        gym_info = extract_gym_info(full_text)
-        if gym_info['date_range'] or gym_info['email']:
-            print(f"\n关键信息：")
-            if gym_info['date_range']:
-                print(f"  使用期：{gym_info['date_range']}")
-            if gym_info['email']:
-                print(f"  申请邮箱：{gym_info['email']}")
-        return True
-    else:
-        print("❌ 未匹配到健身房排期通知")
-        print(f"匹配特征：{match_result['matched_patterns']} ({match_result['match_count']}/{len(GYM_PATTERNS)})")
-        return False
+        if match_result['is_gym_notice']:
+            # 用日期范围作为唯一标识（同一通知的多个 text_block 共享同一 full_text）
+            gym_info = extract_gym_info(full_text)
+            notice_key = gym_info.get('date_range') or full_text[:80]
+            
+            # 检查是否已处理
+            if notice_key in processed_ids:
+                skipped_keys.add(notice_key)
+                continue
+            
+            # 新的健身房通知！
+            print(f"最新 OCR 文本：\n{full_text}\n")
+            print("✅ 匹配到新的健身房排期通知！")
+            print(f"匹配特征：{', '.join(match_result['matched_patterns'])}")
+            
+            if gym_info['date_range'] or gym_info['email']:
+                print(f"\n关键信息：")
+                if gym_info['date_range']:
+                    print(f"  使用期：{gym_info['date_range']}")
+                if gym_info['email']:
+                    print(f"  申请邮箱：{gym_info['email']}")
+            
+            # 标记为已处理
+            processed_ids.add(notice_key)
+            _save_processed_ids(processed_ids)
+            
+            return True
+    
+    # 没有找到未处理的健身房通知
+    if skipped_keys:
+        print(f"⏭️ 健身房通知已处理过，跳过（{len(skipped_keys)} 条，标识：{', '.join(skipped_keys)}）")
+    latest = results[0]
+    full_text = latest.get('full_text', '') or ''
+    print(f"最新 OCR 文本：\n{full_text}\n")
+    print("❌ 未匹配到新的健身房排期通知")
+    match_result = check_gym_notification(full_text)
+    print(f"匹配特征：{match_result['matched_patterns']} ({match_result['match_count']}/{len(GYM_PATTERNS)})")
+    return False
 
 
 if __name__ == "__main__":
