@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # 1. 读取图像
-img_path = 'grafana_8_misc001-prd_20260731-113944.png'
+img_path = 'grafana_3_10_30_160_148_20260729-163234.png'
 img = cv2.imread(img_path)
 if img is None:
     print(f'错误：无法读取图片 {img_path}')
@@ -84,16 +84,13 @@ print(f'标题栏间隙: {header_gap}')
 print(f'面板行间隙: {panel_row_gaps}')
 
 # 5. 构建面板行区域
-if header_gap:
-    row_regions = []
-    # 第一行面板从 header_gap 结束开始
-    current_y = header_gap[1]
-    for gap in panel_row_gaps:
-        row_regions.append((current_y, gap[0]))
-        current_y = gap[1]
-    row_regions.append((current_y, content_bottom))
-else:
-    row_regions = [(0, content_bottom)]
+# 直接从 y=0 开始用 panel_row_gaps 分割行，不依赖 header_gap
+row_regions = []
+current_y = 0
+for gap in panel_row_gaps:
+    row_regions.append((current_y, gap[0]))
+    current_y = gap[1]
+row_regions.append((current_y, content_bottom))
 
 print(f'\n面板行区域 ({len(row_regions)} 行):')
 for i, (y1, y2) in enumerate(row_regions):
