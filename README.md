@@ -48,7 +48,7 @@ nvision/
 ├── automate.py             # GUI 自动化：坐标映射 + 点击 + 文本输入
 ├── wechat_moments.py       # 微信朋友圈自动发布
 ├── pic.py                  # VLM 单图识别 + 标注
-├── captureloop.sh          # 循环监控脚本（截图+检测+OCR+关键词匹配）
+├── loop_print.sh           # 循环监控（仅打印捕捉到的消息，无副作用）
 ├── run.sh                  # 压力测试脚本
 └── dataset/                # 训练数据（gitignore，需自行准备）
     ├── data.yaml
@@ -113,11 +113,12 @@ python yolo.py --data dataset/data.yaml --epochs 100
 ### 4. 循环监控微信消息
 
 ```bash
-# 编辑 example_loop.sh 配置模型路径和桌面编号
-bash example_loop.sh
+# 编辑 loop_print.sh 顶部配置模型路径、桌面编号、检测间隔
+bash loop_print.sh
 ```
 
-脚本会循环执行：截取微信窗口 → 检测消息卡片 → OCR → 关键词匹配 → 命中时触发动作（通知、自动回复、发送邮件等）。
+脚本会循环执行：截取微信窗口 → 检测消息卡片 → 裁剪 → OCR → 打印捕捉到的文字。
+本仓库自带的 `loop_print.sh` 仅做检测与打印，不包含任何外部动作；如需在命中关键词后触发通知、自动回复等，可参考 `example_loop.sh` 自行扩展。
 
 ### 5. 微信自动化操作
 
