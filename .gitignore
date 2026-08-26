@@ -32,6 +32,10 @@ dataset/
 coords.json
 ocr_result_example.json
 captureloop.sh
+monitor.log
+bestv2.pt
+bestv3.pt
+.gym_processed.json
 val_batch0_pred.jpg
 *.png
 *.jpg
